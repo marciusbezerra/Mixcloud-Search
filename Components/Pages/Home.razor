@@ -1,0 +1,72 @@
+﻿@page "/"
+
+@*
+https://www.mixcloud.com/developers/#search
+curl -v "https://api.mixcloud.com/search/?q=party+time&type=cloudcast&limit=1&offset=0"
+dotnet new maui-blazor -n MixcloudSearchApp
+dotnet workload install maui # pode demorar
+código.....
+F5
+dotnet add package Microsoft.Extensions.Http
+*@
+
+<div class="container mt-4">
+    <EditForm Model="searchParameters" OnValidSubmit="Search" class="row mb-3">
+        <div class="form-group col-md-6">
+            <InputText @bind-Value="searchParameters.Query" placeholder="Search query" class="form-control" />
+        </div>
+        <div class="form-group col-md-6">
+            <InputSelect @bind-Value="searchParameters.Type" class="form-select">
+                <option value="cloudcast">Cloudcast</option>
+                <option value="user">User</option>
+                <option value="tag">Tag</option>
+            </InputSelect>
+        </div>
+        <button type="submit" class="btn btn-primary m-3">Search</button>
+    </EditForm>
+</div>
+
+@if (results != null)
+{
+    <div class="container mt-4">
+        <div class="row">
+            @foreach (var item in results.Data)
+            {
+                <div class="col-md-4 mb-4">
+                    <div class="card">
+                        <img src="@item.Pictures.Large" class="card-img-top" alt="Image">
+                        <div class="card-body">
+                            <h5 class="card-title">@item.Name</h5>
+                            <p class="card-text">by @item.User.Name</p>
+                            <p class="card-text">Plays: @item.PlayCount</p>
+                            <a href="@item.Url" class="btn btn-primary">Link</a>
+                        </div>
+                    </div>
+                </div>
+            }
+        </div>
+    </div>
+}
+
+@code {
+    private MixcloudResult results;
+    private SearchParameters searchParameters = new SearchParameters
+        {
+            Type = "cloudcast"
+        };
+
+    private async Task Search()
+    {
+        var httpClient = new HttpClient();
+        string url =
+        $"https://api.mixcloud.com/search/?q={searchParameters.Query}&type={searchParameters.Type}&limit=10&offset=0";
+        var response = await httpClient.GetFromJsonAsync<MixcloudResult>(url);
+        results = response;
+    }
+
+    public class SearchParameters
+    {
+        public string? Query { get; set; }
+        public string? Type { get; set; }
+    }
+}
